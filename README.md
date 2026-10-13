@@ -50,9 +50,12 @@ anything; it only *uses* a network that was already trained elsewhere.
  (pixels)       (hidden 1)       (hidden 2)       (hidden 3)     (digits 0-9)
 ```
 
-Sigmoid neurons, trained with cross-entropy cost, L2 regularization, and
-mini-batch SGD. Full details, benchmarks, and the training code itself
-are in the [mnist-neural-network](https://github.com/karthiknarayan01/mnist-neural-network)
+Sigmoid neurons (not softmax — see the training repo's README for why),
+trained with cross-entropy cost, L2 regularization, mini-batch SGD, and
+rotation-based data augmentation (±15°, 50k → 550k training examples).
+**98.47% test accuracy.** Full details, benchmarks, and the training
+code itself are in the
+[mnist-neural-network](https://github.com/karthiknarayan01/mnist-neural-network)
 repo.
 
 ## Running it locally

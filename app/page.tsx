@@ -114,7 +114,11 @@ export default function Home() {
           {mode === "upload" ? (
             <UploadZone onFileSelected={handleFile} disabled={!modelReady || isBusy} />
           ) : (
-            <DrawPad onSubmit={handleFile} disabled={!modelReady || isBusy} />
+            <DrawPad
+              onSubmit={handleFile}
+              onClear={() => setResult(null)}
+              disabled={!modelReady || isBusy}
+            />
           )}
         </div>
 

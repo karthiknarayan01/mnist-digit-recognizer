@@ -17,10 +17,13 @@ import { useEffect, useRef, useState } from "react";
 
 interface DrawPadProps {
   onSubmit: (file: File) => void;
+  /** Called whenever the canvas is cleared or a new stroke begins, so the
+   *  parent can discard any prediction left over from a previous drawing. */
+  onClear: () => void;
   disabled?: boolean;
 }
 
-export default function DrawPad({ onSubmit, disabled }: DrawPadProps) {
+export default function DrawPad({ onSubmit, onClear, disabled }: DrawPadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
@@ -33,6 +36,7 @@ export default function DrawPad({ onSubmit, disabled }: DrawPadProps) {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     setHasDrawn(false);
+    onClear();
   };
 
   useEffect(() => {
@@ -76,6 +80,10 @@ export default function DrawPad({ onSubmit, disabled }: DrawPadProps) {
         }`}
         onPointerDown={(e) => {
           if (disabled) return;
+          // Starting a brand new stroke means the old prediction (if any)
+          // no longer describes what's on the canvas -- clear it right
+          // away rather than leaving a stale, now-wrong answer on screen.
+          if (!isDrawing.current) onClear();
           isDrawing.current = true;
           lastPoint.current = null;
           draw(e);
