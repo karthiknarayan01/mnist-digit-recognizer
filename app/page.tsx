@@ -10,21 +10,29 @@
  * - `UploadZone` / `DrawPad` — get an image of a digit from the user.
  * - `lib/preprocess.ts` — turn that image into the 784 numbers the
  *   network expects.
- * - `lib/network.ts` — run those numbers through the trained network
- *   and get a prediction back.
+ * - `lib/convNetwork.ts` — run those numbers through the trained
+ *   network and get a prediction back.
  * - `PredictionPanel` — show the result beautifully.
  *
  * Everything here runs client-side, in the browser. There's no server
  * involved in making a prediction: the trained model is a static file
- * (`public/model/trained_network.json`) shipped alongside the page, and
- * `NeuralNetwork.loadFromUrl` fetches it once when the page loads.
+ * (`public/model/trained_cnn.json`) shipped alongside the page, and
+ * `ConvNeuralNetwork.loadFromUrl` fetches it once when the page loads.
+ *
+ * This app originally used the plain, fully-connected network from
+ * `lib/network.ts` (98.47% test accuracy). It now uses the
+ * convolutional network from `lib/convNetwork.ts` instead, which tests
+ * meaningfully more accurately -- see the training repo's README for
+ * why a CNN's architecture suits images better. `lib/network.ts` is
+ * kept in this repo for comparison; swap the import below to go back
+ * to it.
  */
 
 import { useEffect, useRef, useState } from "react";
 import UploadZone from "@/components/UploadZone";
 import DrawPad from "@/components/DrawPad";
 import PredictionPanel from "@/components/PredictionPanel";
-import { NeuralNetwork } from "@/lib/network";
+import { ConvNeuralNetwork } from "@/lib/convNetwork";
 import { preprocessImageFile } from "@/lib/preprocess";
 
 type Mode = "upload" | "draw";
@@ -41,11 +49,11 @@ export default function Home() {
   const [result, setResult] = useState<Result | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const networkRef = useRef<NeuralNetwork | null>(null);
+  const networkRef = useRef<ConvNeuralNetwork | null>(null);
   const [modelReady, setModelReady] = useState(false);
 
   useEffect(() => {
-    NeuralNetwork.loadFromUrl("/model/trained_network.json")
+    ConvNeuralNetwork.loadFromUrl("/model/trained_cnn.json")
       .then((net) => {
         networkRef.current = net;
         setModelReady(true);
@@ -76,16 +84,16 @@ export default function Home() {
 
       <div className="flex w-full max-w-xl flex-col items-center gap-3 text-center">
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/50">
-          784 → 100 → 100 → 100 → 10 · pure NumPy · zero ML frameworks
+          convolutional neural network · pure NumPy · zero ML frameworks
         </span>
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           A neural network, built from scratch, reading your handwriting
         </h1>
         <p className="max-w-md text-sm text-white/50">
           Upload a photo of a handwritten digit, or draw one yourself. A
-          sigmoid network trained entirely with hand-written NumPy code —
-          no PyTorch, no TensorFlow — will tell you what it sees, instantly,
-          right here in your browser.
+          convolutional network trained entirely with hand-written NumPy
+          code — no PyTorch, no TensorFlow — will tell you what it sees,
+          instantly, right here in your browser.
         </p>
       </div>
 
