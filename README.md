@@ -8,9 +8,9 @@ weights it uses were trained in a companion project,
 [**mnist-neural-network**](https://github.com/karthiknarayan01/mnist-neural-network),
 which trains the same network using nothing but NumPy.
 
-**🔗 Try it live: <!-- LIVE_URL_PLACEHOLDER -->**
+**🔗 Try it live: [mnist-digit-recognizer-coral.vercel.app](https://mnist-digit-recognizer-coral.vercel.app)**
 
-<!-- SCREENSHOT_PLACEHOLDER -->
+![Screenshot of the app correctly identifying a hand-drawn "2" with 99.6% confidence](docs/screenshot.png)
 
 ## How it works
 
@@ -22,9 +22,14 @@ server making predictions, and your image never leaves your device.
 2. **Preprocessing** ([`lib/preprocess.ts`](lib/preprocess.ts)) converts
    whatever you provided into the exact style of image the network
    learned from: grayscale, inverted if needed so the digit is light on
-   a dark background, cropped to the digit itself, and centered in a
-   28×28 pixel grid — mirroring how the original MNIST dataset itself
-   was built.
+   a dark background, cropped to the digit itself, scaled into a 28×28
+   pixel grid, and centered by **center of mass** — not just its
+   bounding box — mirroring exactly how the original MNIST dataset
+   itself was built. This turned out to matter a lot: the trained
+   network is quite sensitive to exact pixel placement, and switching
+   from bounding-box centering to center-of-mass centering was the
+   difference between flaky, sub-90%-confidence guesses and consistent
+   99%+ confidence on real uploaded images.
 3. **Prediction** ([`lib/network.ts`](lib/network.ts)) runs those 784
    pixel values through a TypeScript re-implementation of the trained
    network's forward pass — the same math as the Python training
