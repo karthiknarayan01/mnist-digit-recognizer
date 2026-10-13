@@ -28,9 +28,12 @@
  * 4. Find the digit's bounding box (the smallest rectangle containing
  *    all its "ink") and crop to just that box, discarding the mostly-
  *    empty margins around it.
- * 5. Shrink that cropped digit down and center it in a 28x28 grid, the
- *    same way the original MNIST dataset was built, with a small margin
- *    of empty space around the edges.
+ * 5. Shrink that cropped digit down to fit a 28x28 grid, then center it
+ *    precisely by its **center of mass** (not just its bounding box) --
+ *    the same way the original MNIST dataset itself was built. The
+ *    network turns out to be quite sensitive to exactly where the ink
+ *    sits in the frame, so matching this step closely matters a lot for
+ *    real-world accuracy.
  * 6. Flatten the final 28x28 grid of brightness values (0 = black,
  *    1 = white) into the single list of 784 numbers the network expects.
  */
@@ -171,10 +174,46 @@ export async function preprocessImageFile(file: File): Promise<PreprocessResult>
   finalCanvas.width = TARGET_SIZE;
   finalCanvas.height = TARGET_SIZE;
   const finalCtx = finalCanvas.getContext("2d")!;
-  finalCtx.fillStyle = "black";
-  finalCtx.fillRect(0, 0, TARGET_SIZE, TARGET_SIZE);
-  finalCtx.imageSmoothingEnabled = true;
-  finalCtx.drawImage(croppedCanvas, offsetX, offsetY, scaledWidth, scaledHeight);
+
+  const paint = (x: number, y: number) => {
+    finalCtx.fillStyle = "black";
+    finalCtx.fillRect(0, 0, TARGET_SIZE, TARGET_SIZE);
+    finalCtx.imageSmoothingEnabled = true;
+    finalCtx.drawImage(croppedCanvas, x, y, scaledWidth, scaledHeight);
+  };
+
+  // A first draft placement, centered purely on the bounding box.
+  paint(offsetX, offsetY);
+
+  // --- A second, more precise centering pass: center of mass ---
+  // The real MNIST dataset wasn't centered by bounding box at all -- it
+  // was centered by *center of mass*, treating each pixel's brightness
+  // as a tiny weight and balancing the whole image like a mobile, so the
+  // "weight" of the ink is evenly distributed around the middle. A thick
+  // digit like "2" or "5" can have noticeably more ink toward its bottom
+  // half, which pulls its bounding-box center away from its true visual
+  // center -- so this extra pass measurably improves how closely our
+  // input matches what the network actually trained on.
+  const draft = finalCtx.getImageData(0, 0, TARGET_SIZE, TARGET_SIZE).data;
+  let massX = 0;
+  let massY = 0;
+  let totalMass = 0;
+  for (let y = 0; y < TARGET_SIZE; y++) {
+    for (let x = 0; x < TARGET_SIZE; x++) {
+      const weight = draft[(y * TARGET_SIZE + x) * 4] / 255;
+      massX += x * weight;
+      massY += y * weight;
+      totalMass += weight;
+    }
+  }
+
+  if (totalMass > 0) {
+    const centerOfMassX = massX / totalMass;
+    const centerOfMassY = massY / totalMass;
+    const shiftX = Math.round(TARGET_SIZE / 2 - centerOfMassX);
+    const shiftY = Math.round(TARGET_SIZE / 2 - centerOfMassY);
+    paint(offsetX + shiftX, offsetY + shiftY);
+  }
 
   // --- Step 6: flatten the final 28x28 grid into 784 numbers ---
   const finalData = finalCtx.getImageData(0, 0, TARGET_SIZE, TARGET_SIZE).data;
