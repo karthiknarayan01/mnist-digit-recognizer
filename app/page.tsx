@@ -83,17 +83,12 @@ export default function Home() {
       <div className="ambient-glow" />
 
       <div className="flex w-full max-w-xl flex-col items-center gap-3 text-center">
-        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/50">
-          convolutional neural network · pure NumPy · zero ML frameworks
-        </span>
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           A neural network, built from scratch, reading your handwriting
         </h1>
         <p className="max-w-md text-sm text-white/50">
-          Upload a photo of a handwritten digit, or draw one yourself. A
-          convolutional network trained entirely with hand-written NumPy
-          code — no PyTorch, no TensorFlow — will tell you what it sees,
-          instantly, right here in your browser.
+          Upload a photo of a number you&apos;ve written, or draw one
+          yourself — then click Predict to see what it guessed.
         </p>
       </div>
 
@@ -120,7 +115,11 @@ export default function Home() {
 
         <div className="w-full">
           {mode === "upload" ? (
-            <UploadZone onFileSelected={handleFile} disabled={!modelReady || isBusy} />
+            <UploadZone
+              onSubmit={handleFile}
+              onClear={() => setResult(null)}
+              disabled={!modelReady || isBusy}
+            />
           ) : (
             <DrawPad
               onSubmit={handleFile}
@@ -131,7 +130,7 @@ export default function Home() {
         </div>
 
         {!modelReady && !error && (
-          <p className="text-xs text-white/40">Loading trained model…</p>
+          <p className="text-xs text-white/40">Getting ready…</p>
         )}
         {isBusy && <p className="text-xs text-white/40">Thinking…</p>}
         {error && <p className="text-xs text-red-400">{error}</p>}
@@ -148,23 +147,11 @@ export default function Home() {
 
       <footer className="mt-20 flex flex-col items-center gap-1 text-xs text-white/30">
         <p>
-          Trained on the classic 70,000-image MNIST dataset — 50k training,
-          10k validation, 10k test.
-        </p>
-        <p>
-          Source on{" "}
           <a
             href="https://github.com/karthiknarayan01/mnist-digit-recognizer"
             className="underline hover:text-white/60"
           >
             GitHub
-          </a>{" "}
-          · training code at{" "}
-          <a
-            href="https://github.com/karthiknarayan01/mnist-neural-network"
-            className="underline hover:text-white/60"
-          >
-            mnist-neural-network
           </a>
         </p>
       </footer>

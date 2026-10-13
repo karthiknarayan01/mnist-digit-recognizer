@@ -7,29 +7,81 @@
  * The drag-and-drop / click-to-browse box where a user picks an image of
  * a handwritten digit. It doesn't know anything about neural networks --
  * its only job is "get a File object from the user, however they choose
- * to provide it", and hand that file to the parent component.
+ * to provide it", show them a preview of what they picked, and only
+ * hand that file to the parent component once they press "Predict" --
+ * mirroring how `DrawPad` works, so both ways of providing a digit feel
+ * the same.
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UploadZoneProps {
-  onFileSelected: (file: File) => void;
+  onSubmit: (file: File) => void;
+  /** Called whenever the picked image is cleared, so the parent can
+   *  discard any prediction left over from a previous image. */
+  onClear: () => void;
   disabled?: boolean;
 }
 
-export default function UploadZone({ onFileSelected, disabled }: UploadZoneProps) {
+export default function UploadZone({ onSubmit, onClear, disabled }: UploadZoneProps) {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Clean up the preview's object URL whenever it changes or the
+  // component goes away, so the browser can free that memory.
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const handleFiles = useCallback(
     (files: FileList | null) => {
       const file = files?.[0];
       if (file && file.type.startsWith("image/")) {
-        onFileSelected(file);
+        setSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
       }
     },
-    [onFileSelected]
+    []
   );
+
+  const clearSelection = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    onClear();
+  };
+
+  if (selectedFile && previewUrl) {
+    return (
+      <div className="flex flex-col items-center gap-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={previewUrl}
+          alt="The image you picked"
+          className="h-64 w-64 rounded-2xl border-2 border-white/15 bg-black object-contain shadow-inner"
+        />
+        <div className="flex gap-3">
+          <button
+            onClick={clearSelection}
+            disabled={disabled}
+            className="rounded-full border border-white/15 px-5 py-2 text-sm font-medium text-white/70 transition hover:bg-white/5 disabled:opacity-40"
+          >
+            Clear
+          </button>
+          <button
+            onClick={() => onSubmit(selectedFile)}
+            disabled={disabled}
+            className="rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Predict this
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -73,10 +125,10 @@ export default function UploadZone({ onFileSelected, disabled }: UploadZoneProps
         ✍️
       </div>
       <p className="text-sm font-medium text-white/90">
-        Drop an image here, or click to browse
+        Drop a picture here, or click to choose one
       </p>
       <p className="text-xs text-white/40">
-        A photo or screenshot of a single handwritten digit works best — PNG, JPG, or WEBP.
+        A photo of a single number you&apos;ve written works best.
       </p>
     </div>
   );
