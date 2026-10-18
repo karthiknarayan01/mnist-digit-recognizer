@@ -59,9 +59,11 @@ A small convolutional neural network (CNN): one layer of 20 filters
 scans the image for simple patterns, a pooling layer shrinks the
 result, and the same kind of fully-connected "voting" layers then
 decide the digit. Trained with softmax cross-entropy, L2
-regularization, and mini-batch SGD. **98.96% test accuracy** — beating
-the plain network's 98.47% (even with 11x more training data via
-augmentation) using less data and less training time.
+regularization, mini-batch SGD, and the same rotation-based data
+augmentation (±15°, 50k → 550k training examples) that helped the
+plain network. **99.20% test accuracy** — the best of four
+configurations tried, beating the CNN alone (98.96%), the plain network
+with augmentation (98.47%), and the plain network alone (98.02%).
 
 This repo also ships
 [`lib/network.ts`](lib/network.ts) — a from-scratch re-implementation
