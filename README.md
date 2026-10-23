@@ -10,7 +10,7 @@ which trains the same network using nothing but NumPy.
 
 **🔗 Try it live: [mnist-digit-recognizer-coral.vercel.app](https://mnist-digit-recognizer-coral.vercel.app)**
 
-![Screenshot of the app correctly identifying an uploaded "2" with 100.0% confidence](docs/screenshot.png)
+![Screenshot of the app correctly identifying an uploaded "9" with 100.0% confidence](docs/screenshot.png)
 
 ## How it works
 
