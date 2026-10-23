@@ -50,20 +50,26 @@ anything; it only *uses* a network that was already trained elsewhere.
 ```
 28x28x1 image
     -> Conv2D(1 -> 20 filters, 5x5)     => 24x24x20
-    -> ReLU
-    -> MaxPool2D(2x2)                   => 12x12x20
-    -> Dense(2880 -> 100) -> ReLU -> Dense(100 -> 10) -> softmax
+    -> ReLU -> MaxPool2D(2x2)           => 12x12x20
+    -> Conv2D(20 -> 40 filters, 5x5)    => 8x8x40
+    -> ReLU -> MaxPool2D(2x2)           => 4x4x40
+    -> Dense(640 -> 100) -> ReLU -> Dense(100 -> 10) -> softmax
 ```
 
-A small convolutional neural network (CNN): one layer of 20 filters
-scans the image for simple patterns, a pooling layer shrinks the
-result, and the same kind of fully-connected "voting" layers then
-decide the digit. Trained with softmax cross-entropy, L2
-regularization, mini-batch SGD, and the same rotation-based data
-augmentation (±15°, 50k → 550k training examples) that helped the
-plain network. **99.20% test accuracy** — the best of four
-configurations tried, beating the CNN alone (98.96%), the plain network
-with augmentation (98.47%), and the plain network alone (98.02%).
+A small convolutional neural network (CNN): two rounds of "scan for
+patterns with a set of filters, then shrink the result down" — the
+second round sees the first round's pattern maps rather than raw
+pixels, so it can learn combinations of simple patterns rather than
+just the patterns themselves — followed by the same kind of
+fully-connected "voting" layers that decide the digit. Trained with
+softmax cross-entropy, L2 regularization, mini-batch SGD, and the same
+rotation-based data augmentation (±15°, 50k → 550k training examples)
+that helped the plain network. **99.35% test accuracy** — the best of
+five configurations tried (chosen by cheaply screening several
+architectures first, not by guessing), beating a single-layer CNN with
+the same augmentation (99.20%), the CNN alone (98.96%), the plain
+network with augmentation (98.47%), and the plain network alone
+(98.02%).
 
 This repo also ships
 [`lib/network.ts`](lib/network.ts) — a from-scratch re-implementation
